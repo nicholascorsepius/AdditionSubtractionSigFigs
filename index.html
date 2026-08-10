@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Addition and Subtraction with Significant Figures</title>
+
+<style>
+    :root {
+        --blue: #2563eb;
+        --blue-light: #dbeafe;
+        --green: #15803d;
+        --green-light: #dcfce7;
+        --red: #b91c1c;
+        --red-light: #fee2e2;
+        --gray: #6b7280;
+        --light-gray: #e5e7eb;
+        --very-light-gray: #f9fafb;
+        --dark: #111827;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 30px 20px;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f3f4f6;
+        color: var(--dark);
+    }
+
+    .container {
+        max-width: 850px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 14px;
+        padding: 28px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+        margin-top: 0;
+        font-size: 28px;
+    }
+
+    .instructions {
+        line-height: 1.5;
+        margin-bottom: 28px;
+    }
+
+    .stage {
+        margin-top: 26px;
+        padding-top: 22px;
+        border-top: 1px solid var(--light-gray);
+    }
+
+    .stage-title {
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+
+    .number-area {
+        margin: 25px auto;
+        width: fit-content;
+        max-width: 100%;
+        font-family: "Courier New", monospace;
+        font-size: 34px;
+    }
+
+    .number-row {
+        display: grid;
+        align-items: center;
+        margin: 5px 0;
+    }
+
+    .operator {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 30px;
+        text-align: center;
+    }
+
+    .digit,
+    .decimal,
+    .blank {
+        width: 42px;
+        height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .digit {
+        border: 2px solid transparent;
+        border-radius: 7px;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s, border 0.15s;
+    }
+
+    .digit:hover:not(.locked) {
+        background: var(--blue-light);
+        border-color: var(--blue);
+    }
+
+    .digit.correct {
+        background: var(--green-light);
+        border-color: var(--green);
+    }
+
+    .digit.wrong {
+        background: var(--red-light);
+        border-color: var(--red);
+    }
+
+    .digit.locked {
+        cursor: default;
+    }
+
+    .decimal {
+        cursor: default;
+    }
+
+    .decimal-placeholder {
+        visibility: hidden;
+    }
+
+    .rule {
+        height: 3px;
+        background: var(--dark);
+        margin-top: 8px;
+        margin-bottom: 8px;
+        grid-column: 1 / -1;
+    }
+
+    .feedback {
+        min-height: 26px;
+        margin-top: 12px;
+        font-weight: bold;
+    }
+
+    .feedback.correct-feedback {
+        color: var(--green);
+    }
+
+    .feedback.wrong-feedback {
+        color: var(--red);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .answer-entry {
+        margin-top: 20px;
+    }
+
+    input[type="text"] {
+        font-size: 22px;
+        padding: 10px 12px;
+        width: 220px;
+        border-radius: 8px;
+        border: 2px solid #9ca3af;
+    }
+
+    input[type="text"]:focus {
+        outline: none;
+        border-color: var(--blue);
+    }
+
+    button {
+        border: none;
+        border-radius: 8px;
+        padding: 11px 18px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .primary-button {
+        background: var(--blue);
+        color: white;
+    }
+
+    .secondary-button {
+        background: #374151;
+        color: white;
+    }
+
+    .button-row {
+        margin-top: 22px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .result-message {
+        margin-top: 14px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .final-correct {
+        color: var(--green);
+    }
+
+    .final-wrong {
+        color: var(--red);
+    }
+
+    .progress {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 25px;
+    }
+
+    .progress-box {
+        flex: 1;
+        padding: 8px;
+        text-align: center;
+        border-radius: 6px;
+        background: #e5e7eb;
+        font-size: 14px;
+    }
+
+    .progress-box.active {
+        background: var(--blue-light);
+        color: #1e40af;
+        font-weight: bold;
+    }
+
+    .progress-box.done {
+        background: var(--green-light);
+        color: var(--green);
+        font-weight: bold;
+    }
+
+    .explanation {
+        margin-top: 18px;
+        background: var(--very-light-gray);
+        padding: 14px;
+        border-radius: 8px;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+        .container {
+            padding: 18px;
+        }
+
+        .number-area {
+            font-size: 25px;
+        }
+
+        .digit,
+        .decimal,
+        .blank {
+            width: 31px;
+            height: 40px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Addition & Subtraction: Significant Figures</h1>
+
+    <div class="instructions">
+        For addition and subtraction, the precision of the final answer is
+        determined by the <strong>least precise decimal place</strong>.
+        Work through the three steps below.
+    </div>
+
+    <div class="progress">
+        <div id="progress1" class="progress-box active">
+            1. Analyze Inputs
+        </div>
+        <div id="progress2" class="progress-box">
+            2. Analyze Result
+        </div>
+        <div id="progress3" class="progress-box">
+            3. Round Answer
+        </div>
+    </div>
+
+
+    <!-- ============================== -->
+    <!-- STAGE 1 -->
+    <!-- ============================== -->
+
+    <div id="stage1">
+
+        <div class="stage-title">
+            Step 1: Select the last significant digit in each number.
+        </div>
+
+        <p>
+            Click the digit representing the <strong>last significant figure</strong>
+            in each measurement.
+        </p>
+
+        <div id="problemArea" class="number-area"></div>
+
+        <div id="stage1Feedback" class="feedback"></div>
+
+    </div>
+
+
+    <!-- ============================== -->
+    <!-- STAGE 2 -->
+    <!-- ============================== -->
+
+    <div id="stage2" class="stage hidden">
+
+        <div class="stage-title">
+            Step 2: Select where the last significant digit should be in the answer.
+        </div>
+
+        <p>
+            The unrounded result is shown below. Click the digit corresponding
+            to the place where the final rounded answer must end.
+        </p>
+
+        <div id="resultArea" class="number-area"></div>
+
+        <div id="stage2Feedback" class="feedback"></div>
+
+    </div>
+
+
+    <!-- ============================== -->
+    <!-- STAGE 3 -->
+    <!-- ============================== -->
+
+    <div id="stage3" class="stage hidden">
+
+        <div class="stage-title">
+            Step 3: Enter the correctly rounded answer.
+        </div>
+
+        <div class="answer-entry">
+            <label for="answerInput">
+                <strong>Rounded answer:</strong>
+            </label>
+            <br><br>
+
+            <input
+                type="text"
+                id="answerInput"
+                autocomplete="off"
+                inputmode="decimal"
+            >
+
+            <button
+                type="button"
+                id="checkAnswerButton"
+                class="primary-button">
+                Check Answer
+            </button>
+        </div>
+
+        <div id="finalFeedback" class="result-message"></div>
+
+        <div id="explanation" class="explanation hidden"></div>
+
+    </div>
+
+
+    <div class="button-row">
+        <button
+            type="button"
+            id="newProblemButton"
+            class="secondary-button">
+            New Problem
+        </button>
+    </div>
+
+</div>
+
+
+<script>
+
+let problem = null;
+
+let operand1Correct = false;
+let operand2Correct = false;
+let resultPlaceCorrect = false;
+
+
+// ==========================================================
+// RANDOM NUMBER HELPERS
+// ==========================================================
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
+// ==========================================================
+// CREATE A FORMATTED MEASUREMENT
+// ==========================================================
+
+function createMeasurement(decimalPlaces) {
+
+    // 1-3 digits before the decimal point
+    const integerDigits = randomInt(1, 3);
+
+    const minimum = Math.pow(10, integerDigits - 1);
+    const maximum = Math.pow(10, integerDigits) - 1;
+
+    let integerPart = randomInt(minimum, maximum);
+
+    let decimalPart = "";
+
+    for (let i = 0; i < decimalPlaces; i++) {
+        decimalPart += randomInt(0, 9);
+    }
+
+    let display;
+
+    if (decimalPlaces === 0) {
+
+        /*
+        Avoid a trailing zero for whole numbers because something like
+        "120" has ambiguous significant figures when written without
+        an explicit decimal point.
+        */
+
+        while (integerPart % 10 === 0) {
+            integerPart = randomInt(minimum, maximum);
+        }
+
+        display = String(integerPart);
+
+    } else {
+
+        display = integerPart + "." + decimalPart;
+    }
+
+    const sigFigs = integerDigits + decimalPlaces;
+
+    return {
+        display: display,
+        value: Number(display),
+        decimalPlaces: decimalPlaces,
+        sigFigs: sigFigs,
+        lastSigPlace: -decimalPlaces
+    };
+}
+
+
+// ==========================================================
+// GENERATE PROBLEM
+// ==========================================================
+
+function generateProblem() {
+
+    let first;
+    let second;
+
+    /*
+    Keep generating until BOTH of these are different:
+
+        - number of decimal places
+        - number of significant figures
+    */
+
+    do {
+
+        const dp1 = randomInt(0, 3);
+        let dp2 = randomInt(0, 3);
+
+        while (dp2 === dp1) {
+            dp2 = randomInt(0, 3);
+        }
+
+        first = createMeasurement(dp1);
+        second = createMeasurement(dp2);
+
+    } while (first.sigFigs === second.sigFigs);
+
+
+    // Randomly choose + or −
+    const operation = Math.random() < 0.5 ? "+" : "−";
+
+
+    /*
+    For subtraction, place the larger number first.
+    This keeps the arithmetic focused on significant figures
+    rather than negative-number handling.
+    */
+
+    if (operation === "−" && first.value < second.value) {
+        const temp = first;
+        first = second;
+        second = temp;
+    }
+
+
+    const maxDecimalPlaces = Math.max(
+        first.decimalPlaces,
+        second.decimalPlaces
+    );
+
+
+    /*
+    Calculate using scaled integers to reduce floating-point
+    display errors.
+    */
+
+    const scale = Math.pow(10, maxDecimalPlaces);
+
+    const firstScaled =
+        Math.round(first.value * scale);
+
+    const secondScaled =
+        Math.round(second.value * scale);
+
+    let resultScaled;
+
+    if (operation === "+") {
+        resultScaled = firstScaled + secondScaled;
+    } else {
+        resultScaled = firstScaled - secondScaled;
+    }
+
+    const resultValue = resultScaled / scale;
+
+    const resultDisplay =
+        resultValue.toFixed(maxDecimalPlaces);
+
+
+    /*
+    Addition/subtraction rule:
+
+    The answer is rounded to the decimal place of the operand
+    whose last significant digit is furthest to the LEFT.
+
+    With ordinary decimal notation, this is the operand with
+    FEWER decimal places.
+    */
+
+    const limitingDecimalPlaces =
+        Math.min(first.decimalPlaces, second.decimalPlaces);
+
+    const limitingPlace =
+        -limitingDecimalPlaces;
+
+
+    const roundedAnswer =
+        resultValue.toFixed(limitingDecimalPlaces);
+
+
+    problem = {
+        first: first,
+        second: second,
+        operation: operation,
+        resultValue: resultValue,
+        resultDisplay: resultDisplay,
+        limitingDecimalPlaces: limitingDecimalPlaces,
+        limitingPlace: limitingPlace,
+        roundedAnswer: roundedAnswer,
+        maxDecimalPlaces: maxDecimalPlaces
+    };
+
+
+    operand1Correct = false;
+    operand2Correct = false;
+    resultPlaceCorrect = false;
+
+    resetInterface();
+    renderProblem();
+}
+
+
+// ==========================================================
+// RESET INTERFACE
+// ==========================================================
+
+function resetInterface() {
+
+    document.getElementById("stage1Feedback").textContent = "";
+    document.getElementById("stage1Feedback").className = "feedback";
+
+    document.getElementById("stage2Feedback").textContent = "";
+    document.getElementById("stage2Feedback").className = "feedback";
+
+    document.getElementById("finalFeedback").textContent = "";
+    document.getElementById("finalFeedback").className = "result-message";
+
+    document.getElementById("answerInput").value = "";
+
+    document.getElementById("stage2").classList.add("hidden");
+    document.getElementById("stage3").classList.add("hidden");
+    document.getElementById("explanation").classList.add("hidden");
+
+    document.getElementById("progress1").className =
+        "progress-box active";
+
+    document.getElementById("progress2").className =
+        "progress-box";
+
+    document.getElementById("progress3").className =
+        "progress-box";
+}
+
+
+// ==========================================================
+// DETERMINE GRID EXTENTS
+// ==========================================================
+
+function getIntegerLength(numberString) {
+
+    return numberString.split(".")[0].length;
+}
+
+
+function getGridInformation(strings) {
+
+    let maximumIntegerLength = 1;
+    let maximumDecimalPlaces = 0;
+
+    strings.forEach(str => {
+
+        const pieces = str.split(".");
+
+        maximumIntegerLength =
+            Math.max(maximumIntegerLength, pieces[0].length);
+
+        const decimals =
+            pieces.length > 1 ? pieces[1].length : 0;
+
+        maximumDecimalPlaces =
+            Math.max(maximumDecimalPlaces, decimals);
+    });
+
+
+    return {
+        maxIntegerLength: maximumIntegerLength,
+        maxDecimalPlaces: maximumDecimalPlaces
+    };
+}
+
+
+// ==========================================================
+// GET DIGIT AT A PARTICULAR PLACE
+//
+// place = 2      hundreds
+// place = 1      tens
+// place = 0      ones
+// place = -1     tenths
+// place = -2     hundredths
+// ==========================================================
+
+function getDigitAtPlace(numberString, place) {
+
+    const pieces = numberString.split(".");
+
+    const integerPart = pieces[0];
+    const decimalPart =
+        pieces.length > 1 ? pieces[1] : "";
+
+
+    if (place >= 0) {
+
+        const index =
+            integerPart.length - 1 - place;
+
+        if (index < 0 || index >= integerPart.length) {
+            return null;
+        }
+
+        return integerPart[index];
+
+    } else {
+
+        const index =
+            (-place) - 1;
+
+        if (index < 0 || index >= decimalPart.length) {
+            return null;
+        }
+
+        return decimalPart[index];
+    }
+}
+
+
+// ==========================================================
+// CREATE NUMBER ROW
+// ==========================================================
+
+function createNumberRow(
+    numberString,
+    rowType,
+    gridInfo,
+    operandNumber = null
+) {
+
+    const row = document.createElement("div");
+    row.className = "number-row";
+
+
+    /*
+    One column for operator plus:
+
+       integer columns
+       decimal-point column
+       fractional columns
+    */
+
+    const totalColumns =
+        1 +
+        gridInfo.maxIntegerLength +
+        1 +
+        gridInfo.maxDecimalPlaces;
+
+    row.style.gridTemplateColumns =
+        "42px repeat(" + (totalColumns - 1) + ", 42px)";
+
+
+    // Operator column
+    const operatorCell =
+        document.createElement("div");
+
+    operatorCell.className = "operator";
+
+    if (rowType === "second") {
+        operatorCell.textContent = problem.operation;
+    }
+
+    row.appendChild(operatorCell);
+
+
+    // Integer positions
+    for (
+        let place = gridInfo.maxIntegerLength - 1;
+        place >= 0;
+        place--
+    ) {
+
+        addDigitCell(
+            row,
+            numberString,
+            place,
+            rowType,
+            operandNumber
+        );
+    }
+
+
+    // Decimal point column
+    const decimal = document.createElement("div");
+    decimal.className = "decimal";
+
+    if (numberString.includes(".")) {
+        decimal.textContent = ".";
+    } else {
+        decimal.textContent = ".";
+        decimal.classList.add("decimal-placeholder");
+    }
+
+    row.appendChild(decimal);
+
+
+    // Decimal positions
+    for (
+        let place = -1;
+        place >= -gridInfo.maxDecimalPlaces;
+        place--
+    ) {
+
+        addDigitCell(
+            row,
+            numberString,
+            place,
+            rowType,
+            operandNumber
+        );
+    }
+
+
+    return row;
+}
+
+
+// ==========================================================
+// ADD INDIVIDUAL DIGIT
+// ==========================================================
+
+function addDigitCell(
+    row,
+    numberString,
+    place,
+    rowType,
+    operandNumber
+) {
+
+    const digitValue =
+        getDigitAtPlace(numberString, place);
+
+    const cell =
+        document.createElement("div");
+
+
+    if (digitValue === null) {
+
+        cell.className = "blank";
+        row.appendChild(cell);
+        return;
+    }
+
+
+    cell.className = "digit";
+    cell.textContent = digitValue;
+    cell.dataset.place = place;
+
+
+    if (rowType === "operand") {
+
+        cell.dataset.operand =
+            operandNumber;
+
+        cell.addEventListener(
+            "click",
+            handleOperandDigitClick
+        );
+
+    } else if (rowType === "result") {
+
+        cell.addEventListener(
+            "click",
+            handleResultDigitClick
+        );
+    }
+
+
+    row.appendChild(cell);
+}
+
+
+// ==========================================================
+// RENDER ORIGINAL PROBLEM
+// ==========================================================
+
+function renderProblem() {
+
+    const area =
+        document.getElementById("problemArea");
+
+    area.innerHTML = "";
+
+
+    const gridInfo =
+        getGridInformation([
+            problem.first.display,
+            problem.second.display
+        ]);
+
+
+    const firstRow =
+        createNumberRow(
+            problem.first.display,
+            "operand",
+            gridInfo,
+            1
+        );
+
+
+    const secondRow =
+        createNumberRow(
+            problem.second.display,
+            "second",
+            gridInfo,
+            2
+        );
+
+
+    /*
+    The second row needs to behave as an operand
+    while still displaying the operator.
+    */
+
+    secondRow
+        .querySelectorAll(".digit")
+        .forEach(cell => {
+
+            cell.dataset.operand = 2;
+
+            cell.addEventListener(
+                "click",
+                handleOperandDigitClick
+            );
+        });
+
+
+    area.appendChild(firstRow);
+    area.appendChild(secondRow);
+
+
+    const rule = document.createElement("div");
+    rule.className = "number-row";
+
+    const totalColumns =
+        1 +
+        gridInfo.maxIntegerLength +
+        1 +
+        gridInfo.maxDecimalPlaces;
+
+    rule.style.gridTemplateColumns =
+        "42px repeat(" + (totalColumns - 1) + ", 42px)";
+
+
+    const line = document.createElement("div");
+    line.className = "rule";
+
+    rule.appendChild(line);
+    area.appendChild(rule);
+}
+
+
+// ==========================================================
+// OPERAND DIGIT CLICK
+// ==========================================================
+
+function handleOperandDigitClick(event) {
+
+    const cell = event.currentTarget;
+
+    const operandNumber =
+        Number(cell.dataset.operand);
+
+    const selectedPlace =
+        Number(cell.dataset.place);
+
+
+    let measurement;
+    let alreadyCorrect;
+
+    if (operandNumber === 1) {
+        measurement = problem.first;
+        alreadyCorrect = operand1Correct;
+    } else {
+        measurement = problem.second;
+        alreadyCorrect = operand2Correct;
+    }
+
+
+    if (alreadyCorrect) {
+        return;
+    }
+
+
+    /*
+    Remove any previous incorrect highlighting
+    from this operand.
+    */
+
+    const selector =
+        '.digit[data-operand="' +
+        operandNumber +
+        '"]';
+
+    document
+        .querySelectorAll(selector)
+        .forEach(digit => {
+            digit.classList.remove("wrong");
+        });
+
+
+    if (
+        selectedPlace ===
+        measurement.lastSigPlace
+    ) {
+
+        cell.classList.add("correct");
+        cell.classList.add("locked");
+
+
+        document
+            .querySelectorAll(selector)
+            .forEach(digit => {
+                digit.classList.add("locked");
+            });
+
+
+        if (operandNumber === 1) {
+            operand1Correct = true;
+        } else {
+            operand2Correct = true;
+        }
+
+
+        document.getElementById(
+            "stage1Feedback"
+        ).textContent =
+            "Correct.";
+
+
+        document.getElementById(
+            "stage1Feedback"
+        ).className =
+            "feedback correct-feedback";
+
+
+        if (
+            operand1Correct &&
+            operand2Correct
+        ) {
+            revealResult();
+        }
+
+    } else {
+
+        cell.classList.add("wrong");
+
+        document.getElementById(
+            "stage1Feedback"
+        ).textContent =
+            "That is not the last significant digit. Try again.";
+
+        document.getElementById(
+            "stage1Feedback"
+        ).className =
+            "feedback wrong-feedback";
+    }
+}
+
+
+// ==========================================================
+// REVEAL UNROUNDED RESULT
+// ==========================================================
+
+function revealResult() {
+
+    document.getElementById(
+        "stage1Feedback"
+    ).textContent =
+        "Correct. Both measurements have been identified.";
+
+
+    document.getElementById(
+        "progress1"
+    ).className =
+        "progress-box done";
+
+
+    document.getElementById(
+        "progress2"
+    ).className =
+        "progress-box active";
+
+
+    document.getElementById(
+        "stage2"
+    ).classList.remove("hidden");
+
+
+    renderResult();
+}
+
+
+// ==========================================================
+// RENDER UNROUNDED RESULT
+// ==========================================================
+
+function renderResult() {
+
+    const area =
+        document.getElementById("resultArea");
+
+    area.innerHTML = "";
+
+
+    const gridInfo =
+        getGridInformation([
+            problem.first.display,
+            problem.second.display,
+            problem.resultDisplay
+        ]);
+
+
+    const resultRow =
+        createNumberRow(
+            problem.resultDisplay,
+            "result",
+            gridInfo
+        );
+
+
+    area.appendChild(resultRow);
+}
+
+
+// ==========================================================
+// RESULT DIGIT CLICK
+// ==========================================================
+
+function handleResultDigitClick(event) {
+
+    if (resultPlaceCorrect) {
+        return;
+    }
+
+
+    const cell = event.currentTarget;
+
+    const selectedPlace =
+        Number(cell.dataset.place);
+
+
+    document
+        .querySelectorAll(
+            "#resultArea .digit"
+        )
+        .forEach(digit => {
+            digit.classList.remove("wrong");
+        });
+
+
+    if (
+        selectedPlace ===
+        problem.limitingPlace
+    ) {
+
+        resultPlaceCorrect = true;
+
+        cell.classList.add("correct");
+
+
+        document
+            .querySelectorAll(
+                "#resultArea .digit"
+            )
+            .forEach(digit => {
+                digit.classList.add("locked");
+            });
+
+
+        document.getElementById(
+            "stage2Feedback"
+        ).textContent =
+            "Correct. This is the last significant position allowed in the final answer.";
+
+
+        document.getElementById(
+            "stage2Feedback"
+        ).className =
+            "feedback correct-feedback";
+
+
+        revealAnswerBox();
+
+    } else {
+
+        cell.classList.add("wrong");
+
+        document.getElementById(
+            "stage2Feedback"
+        ).textContent =
+            "Not quite. The final answer must end at the same place as the least precise measurement.";
+
+
+        document.getElementById(
+            "stage2Feedback"
+        ).className =
+            "feedback wrong-feedback";
+    }
+}
+
+
+// ==========================================================
+// REVEAL ANSWER BOX
+// ==========================================================
+
+function revealAnswerBox() {
+
+    document.getElementById(
+        "progress2"
+    ).className =
+        "progress-box done";
+
+
+    document.getElementById(
+        "progress3"
+    ).className =
+        "progress-box active";
+
+
+    document.getElementById(
+        "stage3"
+    ).classList.remove("hidden");
+
+
+    document.getElementById(
+        "answerInput"
+    ).focus();
+}
+
+
+// ==========================================================
+// CHECK FINAL ANSWER
+// ==========================================================
+
+function checkFinalAnswer() {
+
+    const input =
+        document
+            .getElementById("answerInput")
+            .value
+            .trim();
+
+
+    if (input === "") {
+
+        document.getElementById(
+            "finalFeedback"
+        ).textContent =
+            "Enter an answer first.";
+
+        document.getElementById(
+            "finalFeedback"
+        ).className =
+            "result-message final-wrong";
+
+        return;
+    }
+
+
+    const numericInput =
+        Number(input);
+
+
+    if (Number.isNaN(numericInput)) {
+
+        document.getElementById(
+            "finalFeedback"
+        ).textContent =
+            "Please enter a numerical value.";
+
+        document.getElementById(
+            "finalFeedback"
+        ).className =
+            "result-message final-wrong";
+
+        return;
+    }
+
+
+    const correctValue =
+        Number(problem.roundedAnswer);
+
+
+    /*
+    Numerical comparison plus a format check.
+
+    When decimal places matter, the student should retain
+    trailing zeros in the written answer.
+    */
+
+    let formatCorrect = true;
+
+
+    if (problem.limitingDecimalPlaces > 0) {
+
+        const pieces =
+            input.split(".");
+
+        if (pieces.length !== 2) {
+            formatCorrect = false;
+        } else if (
+            pieces[1].length !==
+            problem.limitingDecimalPlaces
+        ) {
+            formatCorrect = false;
+        }
+    }
+
+
+    if (
+        Math.abs(
+            numericInput - correctValue
+        ) < 1e-10 &&
+        formatCorrect
+    ) {
+
+        document.getElementById(
+            "finalFeedback"
+        ).textContent =
+            "Correct!";
+
+
+        document.getElementById(
+            "finalFeedback"
+        ).className =
+            "result-message final-correct";
+
+
+        document.getElementById(
+            "progress3"
+        ).className =
+            "progress-box done";
+
+
+        showExplanation();
+
+    } else if (
+        Math.abs(
+            numericInput - correctValue
+        ) < 1e-10 &&
+        !formatCorrect
+    ) {
+
+        document.getElementById(
+            "finalFeedback"
+        ).textContent =
+            "The numerical value is correct, but the written precision is not. Include the required decimal places and trailing zeros.";
+
+
+        document.getElementById(
+            "finalFeedback"
+        ).className =
+            "result-message final-wrong";
+
+    } else {
+
+        document.getElementById(
+            "finalFeedback"
+        ).textContent =
+            "That is not the correctly rounded value. Try again.";
+
+
+        document.getElementById(
+            "finalFeedback"
+        ).className =
+            "result-message final-wrong";
+    }
+}
+
+
+// ==========================================================
+// PLACE NAME
+// ==========================================================
+
+function getPlaceName(decimalPlaces) {
+
+    if (decimalPlaces === 0) {
+        return "ones place";
+    }
+
+    if (decimalPlaces === 1) {
+        return "tenths place";
+    }
+
+    if (decimalPlaces === 2) {
+        return "hundredths place";
+    }
+
+    if (decimalPlaces === 3) {
+        return "thousandths place";
+    }
+
+    return decimalPlaces + " decimal places";
+}
+
+
+// ==========================================================
+// EXPLANATION
+// ==========================================================
+
+function showExplanation() {
+
+    const explanation =
+        document.getElementById("explanation");
+
+
+    const firstPlace =
+        getPlaceName(
+            problem.first.decimalPlaces
+        );
+
+    const secondPlace =
+        getPlaceName(
+            problem.second.decimalPlaces
+        );
+
+    const limitingPlace =
+        getPlaceName(
+            problem.limitingDecimalPlaces
+        );
+
+
+    explanation.innerHTML =
+        "<strong>Why?</strong><br>" +
+        problem.first.display +
+        " is precise through the <strong>" +
+        firstPlace +
+        "</strong>, while " +
+        problem.second.display +
+        " is precise through the <strong>" +
+        secondPlace +
+        "</strong>.<br><br>" +
+        "For addition and subtraction, the answer is therefore limited to the <strong>" +
+        limitingPlace +
+        "</strong>.<br><br>" +
+        "Unrounded result: <strong>" +
+        problem.resultDisplay +
+        "</strong><br>" +
+        "Final answer: <strong>" +
+        problem.roundedAnswer +
+        "</strong>";
+
+
+    explanation.classList.remove("hidden");
+}
+
+
+// ==========================================================
+// BUTTONS
+// ==========================================================
+
+document
+    .getElementById("checkAnswerButton")
+    .addEventListener(
+        "click",
+        checkFinalAnswer
+    );
+
+
+document
+    .getElementById("answerInput")
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Enter") {
+                checkFinalAnswer();
+            }
+        }
+    );
+
+
+document
+    .getElementById("newProblemButton")
+    .addEventListener(
+        "click",
+        generateProblem
+    );
+
+
+// ==========================================================
+// START
+// ==========================================================
+
+generateProblem();
+
+</script>
+
+</body>
+</html>
